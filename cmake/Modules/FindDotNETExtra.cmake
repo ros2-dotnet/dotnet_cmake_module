@@ -17,7 +17,7 @@ function(add_assemblies _TARGET_NAME)
   cmake_parse_arguments(_add_assemblies
     "USE_DOTNET_CORE"
     "OUTPUT_DIR;OUTPUT_TYPE;OUTPUT_NAME"
-    "SOURCES;INCLUDE_ASSEMBLIES_DLL;INCLUDE_ASSEMBLIES_NUGET;COMPILER_ARGS"
+    "SOURCES;REFERENCE_ASSEMBLIES;INCLUDE_ASSEMBLIES_DLL;INCLUDE_ASSEMBLIES_NUGET;COMPILER_ARGS"
     ${ARGN}
   )
   
@@ -254,32 +254,38 @@ else()
         set(ALL_COMPILER_ARGS 
             ${_add_assemblies_COMPILER_ARGS}
             "-out:${OUTPUT_NAME}")
+        if(NOT ${_add_assemblies_REFERENCE_ASSEMBLIES})
+            set(EXT_ASSEMBLIES
+                "-r:${_add_assemblies_REFERENCE_ASSEMBLIES}")
+        endif()
+
         if(OUTPUT_TYPE STREQUAL "Library")
             list(APPEND ALL_COMPILER_ARGS "-target:library")
-            set(OUTPUT_NAME_DLL "${OUTPUT_NAME}.dll")
-            
+            set(OUTPUT_NAME_EXT "${OUTPUT_NAME}.dll")
+            set(_assembly_dll_output_path "${CMAKE_CURRENT_BINARY_DIR}/${OUTPUT_NAME_EXT}")
+        else()
+            list(APPEND ALL_COMPILER_ARGS "-target:exe")
+            set(OUTPUT_NAME_EXT "${OUTPUT_NAME}.exe")
+            set(_assembly_exe_output_path "${CMAKE_CURRENT_BINARY_DIR}/${OUTPUT_NAME_EXT}")
         endif()
+        
         add_custom_target(
             ${_TARGET_NAME} ALL
-            COMMAND mcs "-out:${OUTPUT_NAME_DLL}" ${ALL_COMPILER_ARGS} ${CS_SOURCES}
+            COMMAND mcs "-out:${OUTPUT_NAME_EXT}" "${EXT_ASSEMBLIES}" ${ALL_COMPILER_ARGS} ${CS_SOURCES}
             VERBATIM         
         )
         add_custom_target(
             ${_TARGET_NAME}_rename ALL
-            COMMAND mv "${OUTPUT_NAME}" "${OUTPUT_NAME_DLL}"
+            COMMAND mv "${OUTPUT_NAME}" "${OUTPUT_NAME_EXT}"
             DEPENDS ${_TARGET_NAME}
         )
         
-        set(_assembly_dll_output_path "${CMAKE_CURRENT_BINARY_DIR}/${OUTPUT_NAME_DLL}")
-        
-        Message(${_TARGET_NAME})
     endif(_add_assemblies_USE_DOTNET_CORE)
 
 endif()
 
   if(OUTPUT_TYPE STREQUAL "Library")
 
-    MESSAGE(${_assembly_dll_output_path})
     set_property(
         TARGET
             ${_TARGET_NAME}
