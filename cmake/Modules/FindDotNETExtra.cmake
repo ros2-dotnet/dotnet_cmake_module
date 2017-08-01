@@ -15,12 +15,12 @@
 function(add_assemblies _TARGET_NAME)
 
   cmake_parse_arguments(_add_assemblies
-    ""
+    "USE_DOTNET_CORE"
     "OUTPUT_DIR;OUTPUT_TYPE;OUTPUT_NAME"
-    "SOURCES;INCLUDE_ASSEMBLIES_DLL;INCLUDE_ASSEMBLIES_NUGET"
+    "SOURCES;INCLUDE_ASSEMBLIES_DLL;INCLUDE_ASSEMBLIES_NUGET;COMPILER_ARGS"
     ${ARGN}
   )
-
+  
   set(_DOTNET_SOURCE_FILES ${_add_assemblies_SOURCES} ${_add_assemblies_UNPARSED_ARGUMENTS})
 
   set(OUTPUT_TYPE "${_add_assemblies_OUTPUT_TYPE}")
@@ -150,6 +150,7 @@ if(WIN32)
     add_custom_target(${_TARGET_NAME} ALL DEPENDS ${_nuget_output_path})
   endif()
 else()
+  if(_add_assemblies_USE_DOTNET_CORE)
   set(_assembly_nuget_output_path "${CMAKE_CURRENT_BINARY_DIR}/bin/${PROJECT_NAME}.dll")
   set(_assembly_nuget_output_path "${CMAKE_CURRENT_BINARY_DIR}/bin/${PROJECT_NAME}.1.0.0.nupkg")
 
@@ -246,12 +247,39 @@ else()
   add_dependencies(${_TARGET_NAME}_pack ${_TARGET_NAME}_build)
 
   add_custom_target(${_TARGET_NAME} ALL DEPENDS ${_TARGET_NAME}_pack)
-
+     
+    else()
+        MESSAGE("Using mono")
+        
+        set(ALL_COMPILER_ARGS 
+            ${_add_assemblies_COMPILER_ARGS}
+            "-out:${OUTPUT_NAME}")
+        if(OUTPUT_TYPE STREQUAL "Library")
+            list(APPEND ALL_COMPILER_ARGS "-target:library")
+            set(OUTPUT_NAME_DLL "${OUTPUT_NAME}.dll")
+            
+        endif()
+        add_custom_target(
+            ${_TARGET_NAME} ALL
+            COMMAND mcs "-out:${OUTPUT_NAME_DLL}" ${ALL_COMPILER_ARGS} ${CS_SOURCES}
+            VERBATIM         
+        )
+        add_custom_target(
+            ${_TARGET_NAME}_rename ALL
+            COMMAND mv "${OUTPUT_NAME}" "${OUTPUT_NAME_DLL}"
+            DEPENDS ${_TARGET_NAME}
+        )
+        
+        set(_assembly_dll_output_path "${CMAKE_CURRENT_BINARY_DIR}/${OUTPUT_NAME_DLL}")
+        
+        Message(${_TARGET_NAME})
+    endif(_add_assemblies_USE_DOTNET_CORE)
 
 endif()
 
   if(OUTPUT_TYPE STREQUAL "Library")
 
+    MESSAGE(${_assembly_dll_output_path})
     set_property(
         TARGET
             ${_TARGET_NAME}
@@ -260,15 +288,15 @@ endif()
                 ${_assembly_dll_output_path}
                 ${_assembly_nuget_output_path}
     )
-
-    set_property(
-        TARGET
-            ${_TARGET_NAME}
-        PROPERTY
+    if(NOT USE_DOTNET_CORE)
+        set_property(
+            TARGET
+                ${_TARGET_NAME}
+            PROPERTY
             ASSEMBLIES_NUGET_FILE
                 ${_assembly_nuget_output_path}
     )
-
+    endif()
     set_property(
         TARGET
             ${_TARGET_NAME}
