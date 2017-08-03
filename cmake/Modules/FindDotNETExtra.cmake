@@ -259,6 +259,15 @@ else()
                 "-r:${_add_assemblies_REFERENCE_ASSEMBLIES}")
         endif()
 
+        set(AMENT_PREFIX_PATH_ADPATED $ENV{AMENT_PREFIX_PATH})
+        MESSAGE(${AMENT_PREFIX_PATH_ADPATED})
+        string(REPLACE ":" ";" AMENT_PREFIX_PATH_ADPATED ${AMENT_PREFIX_PATH_ADPATED})
+        
+        foreach(PREFIX_PATH ${AMENT_PREFIX_PATH_ADPATED})
+            list(APPEND LIB_RCLCS_PATH ${PREFIX_PATH}/lib)
+            MESSAGE(${PREFIX_PATH})
+        endforeach()
+        MESSAGE(${LIB_RCLCS_PATH})
         if(OUTPUT_TYPE STREQUAL "Library")
             list(APPEND ALL_COMPILER_ARGS "-target:library")
             set(OUTPUT_NAME_EXT "${OUTPUT_NAME}.dll")
@@ -271,7 +280,7 @@ else()
         
         add_custom_target(
             ${_TARGET_NAME} ALL
-            COMMAND mcs "-out:${OUTPUT_NAME_EXT}" "${EXT_ASSEMBLIES}" ${ALL_COMPILER_ARGS} ${CS_SOURCES}
+            COMMAND mcs "-out:${OUTPUT_NAME_EXT}" "-lib:${LIB_RCLCS_PATH}" "${EXT_ASSEMBLIES}" ${ALL_COMPILER_ARGS} ${CS_SOURCES}
             VERBATIM         
         )
         add_custom_target(
