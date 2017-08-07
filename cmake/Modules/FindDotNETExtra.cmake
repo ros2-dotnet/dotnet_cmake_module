@@ -20,7 +20,7 @@ function(add_assemblies _TARGET_NAME)
     "SOURCES;REFERENCE_ASSEMBLIES;INCLUDE_ASSEMBLIES_DLL;INCLUDE_ASSEMBLIES_NUGET;COMPILER_ARGS"
     ${ARGN}
   )
-  
+
   set(_DOTNET_SOURCE_FILES ${_add_assemblies_SOURCES} ${_add_assemblies_UNPARSED_ARGUMENTS})
 
   set(OUTPUT_TYPE "${_add_assemblies_OUTPUT_TYPE}")
@@ -247,11 +247,11 @@ else()
   add_dependencies(${_TARGET_NAME}_pack ${_TARGET_NAME}_build)
 
   add_custom_target(${_TARGET_NAME} ALL DEPENDS ${_TARGET_NAME}_pack)
-     
+
     else()
         MESSAGE("Using mono")
-        
-        set(ALL_COMPILER_ARGS 
+
+        set(ALL_COMPILER_ARGS
             ${_add_assemblies_COMPILER_ARGS}
             "-out:${OUTPUT_NAME}")
         if(NOT ${_add_assemblies_REFERENCE_ASSEMBLIES})
@@ -262,7 +262,7 @@ else()
         set(AMENT_PREFIX_PATH_ADPATED $ENV{AMENT_PREFIX_PATH})
         MESSAGE(${AMENT_PREFIX_PATH_ADPATED})
         string(REPLACE ":" ";" AMENT_PREFIX_PATH_ADPATED ${AMENT_PREFIX_PATH_ADPATED})
-        
+
         foreach(PREFIX_PATH ${AMENT_PREFIX_PATH_ADPATED})
             list(APPEND LIB_RCLCS_PATH ${PREFIX_PATH}/lib)
             MESSAGE(${PREFIX_PATH})
@@ -277,18 +277,18 @@ else()
             set(OUTPUT_NAME_EXT "${OUTPUT_NAME}.exe")
             set(_assembly_exe_output_path "${CMAKE_CURRENT_BINARY_DIR}/${OUTPUT_NAME_EXT}")
         endif()
-        
+
         add_custom_target(
             ${_TARGET_NAME} ALL
             COMMAND mcs "-out:${OUTPUT_NAME_EXT}" "-lib:${LIB_RCLCS_PATH}" "${EXT_ASSEMBLIES}" ${ALL_COMPILER_ARGS} ${CS_SOURCES}
-            VERBATIM         
+            VERBATIM
         )
         add_custom_target(
             ${_TARGET_NAME}_rename ALL
             COMMAND mv "${OUTPUT_NAME}" "${OUTPUT_NAME_EXT}"
             DEPENDS ${_TARGET_NAME}
         )
-        
+
     endif(_add_assemblies_USE_DOTNET_CORE)
 
 endif()
