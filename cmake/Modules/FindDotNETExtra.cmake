@@ -111,7 +111,7 @@ function(install_dotnet _TARGET_NAME)
     get_target_property(_target_executable ${_TARGET_NAME} EXECUTABLE)
     get_target_property(_target_path ${_TARGET_NAME} OUTPUT_PATH)
     get_target_property(_target_name ${_TARGET_NAME} OUTPUT_NAME)
-    get_target_property(_target_dotnet_core ${_TARGET_NAME} DOTNET_CORE)
+    get_target_property(_target_DotNetCore ${_TARGET_NAME} DotNetCore)
 
     if (ARGC EQUAL 2)
       set (_DESTINATION ${ARGV1})
